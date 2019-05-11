@@ -1,7 +1,3 @@
-# Load MNIST data:
-include(Knet.dir("data","mnist.jl"))
-
-
 # Define convolutional layer:
 struct Conv; w; b; f; end
 (c::Conv)(x) = c.f.(pool(conv4(c.w, x) .+ c.b))
