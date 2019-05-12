@@ -1,3 +1,8 @@
+"""
+    ∇xJ(f, args...)
+
+Returns gradients of the loss function (f) w.r.t. your parameters (args).
+"""
 function ∇xJ(f, args...)
     args = collect(args)
     args = map(a->isa(a, FloatArray) ? param(a) : a, args)
@@ -7,16 +12,36 @@ function ∇xJ(f, args...)
 end
 
 
-function FGSM(x::FloatArray, ∇x::FloatArray, ϵ::T) where T <: AbstractFloat
+"""
+This function implements FGSM (Fast Gradient Sign Method)
+ (arxiv.org/abs/1412.6572). FGSM is a white-box attack which means the attacker
+ has full access to the model  including its parameters. In this attack, we
+ simply take advantage of the  gradients of the loss with respect to input data.
+ We first apply sign function to the input gradients, scale it, and then add
+ those gradients to the input  data to get the perturbed data which will
+ maximize the loss value. See lenet-fgsm notebook for example usage.
+
+    FGSM(x::FloatArray, ∇x::FloatArray, ϵ::T;
+         minval=0.0, maxval=1.0) where T <: AbstractFloat
+
+Applies FGSM for given input array (x), the gradient of your model's loss w.r.t. input array (∇x) and ϵ. minval and maxval stands for clipping.
+
+    FGSM(f, ϵ::T, args...; minval=0.0, maxval=1.0) where T <: AbstractFloat
+
+Applies FGSM for given loss function (f), ϵ and arguments for the loss function.
+ minval and maxval stands for clipping.
+"""
+function FGSM(x::FloatArray, ∇x::FloatArray, ϵ::T;
+              minval=0.0, maxval=1.0) where T <: AbstractFloat
     sgn∇x = sign.(∇x)
     x̂ = x + ϵ * sgn∇x
-    x̂ = min.(1, x̂)
-    x̂ = max.(0, x̂)
+    x̂ = min.(maxval, x̂)
+    x̂ = max.(minval, x̂)
     return x̂
 end
 
 
-function FGSM(f, ϵ::T, args...) where T <: AbstractFloat
+function FGSM(f, ϵ::T, args...; minval=0.0, maxval=1.0) where T <: AbstractFloat
     args = collect(args)
     ∇x  = ∇xJ(f, args...)
     x = filter(i->isa(i, FloatArray), args)
