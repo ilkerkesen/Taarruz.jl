@@ -8,7 +8,7 @@ using .Iterators
 
 @testset "mnist" begin
     include(Knet.dir("data", "mnist.jl"))
-    global dtrn, dtst = mnistdata()
+    global dtrn, dtst = mnistdata(; xtype=Taarruz._atype)
     @test dtrn.length == 60000
     @test dtst.length == 10000
     @test dtrn.xsize[1:end-1] == dtst.xsize[1:end-1] == (28, 28, 1)
@@ -24,9 +24,9 @@ end
     @test typeof(lenet) == Taarruz.Chain
     @test size(lenet(x)) == (10, dtst.batchsize)
     @test accuracy(lenet, dtst) < 0.20
-    progress!(adam(lenet, repeat(dtrn, 10)))
+    progress!(adam(lenet, dtrn))
     global tstacc = accuracy(lenet, dtst)
-    @test tstacc > 0.98
+    @test tstacc > 0.95
 end
 
 
