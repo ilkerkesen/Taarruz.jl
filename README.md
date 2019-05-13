@@ -1,4 +1,6 @@
 # Taarruz
+[![](https://travis-ci.org/ilkerkesen/Taarruz.jl.svg?branch=master)](https://travis-ci.org/ilkerkesen/Taarruz.jl)
+
 Adversarial Attack Tool for [Knet](github.com/denizyuret/Knet.jl).
 
 ## Implemented Attacks
