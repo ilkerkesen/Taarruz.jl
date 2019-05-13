@@ -25,10 +25,10 @@ end
     @test gcheck(linear, x, y; atol=0.05)
     @test typeof(linear) == Taarruz.Chain
     @test size(linear(x)) == (10, dtst.batchsize)
-    @test accuracy(linear, dtst) < 0.20
+    @test accuracy(linear, dtst) < 0.50
     progress!(adam(linear, dtrn))
     global tstacc = accuracy(linear, dtst)
-    @test tstacc > 0.85
+    @test tstacc > 0.75
 end
 
 
