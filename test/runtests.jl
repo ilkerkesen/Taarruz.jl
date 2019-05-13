@@ -8,7 +8,8 @@ using .Iterators
 
 @testset "mnist" begin
     include(Knet.dir("data", "mnist.jl"))
-    global dtrn, dtst = mnistdata(; xtype=Taarruz._atype)
+    global dtrn, dtst = mnistdata()
+    global atype = dtrn.xtype
     @test dtrn.length == 60000
     @test dtst.length == 10000
     @test dtrn.xsize[1:end-1] == dtst.xsize[1:end-1] == (28, 28, 1)
@@ -17,16 +18,26 @@ using .Iterators
 end
 
 
+@testset "linear" begin
+    global linear = Taarruz.Chain(
+        (Taarruz.Dense(784,10,identity; atype=atype), ))
+    x, y = first(dtst); x = param(x)
+    @test gcheck(linear, x, y; atol=0.05)
+    @test typeof(linear) == Taarruz.Chain
+    @test size(linear(x)) == (10, dtst.batchsize)
+    @test accuracy(linear, dtst) < 0.20
+    progress!(adam(linear, dtrn))
+    global tstacc = accuracy(linear, dtst)
+    @test tstacc > 0.85
+end
+
+
 @testset "lenet" begin
-    global lenet = Lenet()
+    lenet = Lenet(; atype=atype)
     x, y = first(dtst); x = param(x)
     @test gcheck(lenet, x, y; atol=0.05)
     @test typeof(lenet) == Taarruz.Chain
     @test size(lenet(x)) == (10, dtst.batchsize)
-    @test accuracy(lenet, dtst) < 0.20
-    progress!(adam(lenet, dtrn))
-    global tstacc = accuracy(lenet, dtst)
-    @test tstacc > 0.95
 end
 
 
@@ -34,7 +45,7 @@ end
     x, y = first(dtst)
 
     ϵ = 0.2
-    x̂s = FGSM(lenet, ϵ, x, y)
+    x̂s = FGSM(linear, ϵ, x, y)
     x̂ = x̂s[1]
     @test length(x̂s) == 1
     @test size(x̂) == size(x)
@@ -42,9 +53,9 @@ end
     @test maximum(x̂) == 1
     @test minimum(x̂) == 0
 
-    example(x,y,ϵ=0.2,f=lenet) = FGSM(f,ϵ,x,y)[1]
-    abuse(x,y,ϵ=0.2,f=lenet; o...) = accuracy(f(example(x,y)), y; o...)
-    abuse(d::Knet.Data, ϵ=0.2, f=lenet) = sum(abuse(x,y,ϵ,f; average=false) for (x,y) in d) / d.length
+    example(x,y,ϵ=0.2,f=linear) = FGSM(f,ϵ,x,y)[1]
+    abuse(x,y,ϵ=0.2,f=linear; o...) = accuracy(f(example(x,y)), y; o...)
+    abuse(d::Knet.Data, ϵ=0.2, f=linear) = sum(abuse(x,y,ϵ,f; average=false) for (x,y) in d) / d.length
 
     fgsmacc = abuse(dtst)
     @test tstacc - fgsmacc > 0.2
@@ -54,11 +65,11 @@ end
 
     ϵ = 0.2
     xp = param(x)
-    J = @diff lenet(xp, y)
+    J = @diff linear(xp, y)
     ∇x = grad(J, xp)
     x̂ = min.(1, max.(0, x + ϵ * sign.(∇x)))
-    @test length(Taarruz.∇xJ(lenet, x, y)) == 1
-    @test ∇x ≈ Taarruz.∇xJ(lenet, x, y)[1]
+    @test length(Taarruz.∇xJ(linear, x, y)) == 1
+    @test ∇x ≈ Taarruz.∇xJ(linear, x, y)[1]
     @test x̂ ≈ FGSM(x, ∇x, ϵ)
-    @test x̂ ≈ FGSM(lenet, ϵ, x, y)[1]
+    @test x̂ ≈ FGSM(linear, ϵ, x, y)[1]
 end

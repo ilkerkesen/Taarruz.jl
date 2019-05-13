@@ -21,27 +21,26 @@ This function implements FGSM (Fast Gradient Sign Method)
  those gradients to the input  data to get the perturbed data which will
  maximize the loss value. See lenet-fgsm notebook for example usage.
 
-    FGSM(x::FloatArray, ∇x::FloatArray, ϵ::T;
-         minval=0.0, maxval=1.0) where T <: AbstractFloat
+    FGSM(x::FloatArray, ∇x::FloatArray, ϵ; minval=0.0, maxval=1.0)
 
 Applies FGSM for given input array (x), the gradient of your model's loss w.r.t. input array (∇x) and ϵ. minval and maxval stands for clipping.
 
-    FGSM(f, ϵ::T, args...; minval=0.0, maxval=1.0) where T <: AbstractFloat
+    FGSM(f, ϵ, args...; minval=0.0, maxval=1.0)
 
 Applies FGSM for given loss function (f), ϵ and arguments for the loss function.
  minval and maxval stands for clipping.
 """
-function FGSM(x::FloatArray, ∇x::FloatArray, ϵ::T;
-              minval=0.0, maxval=1.0) where T <: AbstractFloat
+function FGSM(x::FloatArray, ∇x::FloatArray, ϵ; minval=0.0, maxval=1.0)
+    T = eltype(x)
     sgn∇x = sign.(∇x)
-    x̂ = x + ϵ * sgn∇x
-    x̂ = min.(maxval, x̂)
-    x̂ = max.(minval, x̂)
+    x̂ = x + T(ϵ) * sgn∇x
+    x̂ = min.(T(maxval), x̂)
+    x̂ = max.(T(minval), x̂)
     return x̂
 end
 
 
-function FGSM(f, ϵ::T, args...; minval=0.0, maxval=1.0) where T <: AbstractFloat
+function FGSM(f, ϵ, args...; minval=0.0, maxval=1.0)
     args = collect(args)
     ∇x  = ∇xJ(f, args...)
     x = filter(i->isa(i, FloatArray), args)
