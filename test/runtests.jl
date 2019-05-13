@@ -3,7 +3,6 @@ using AutoGrad
 import AutoGrad: gcheck
 using Taarruz
 using Test
-using .Iterators
 
 
 @testset "mnist" begin
