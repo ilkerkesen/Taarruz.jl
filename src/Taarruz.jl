@@ -1,5 +1,6 @@
 module Taarruz
 using Knet
+using LinearAlgebra
 
 
 _etype = gpu() >= 0 ? Float32 : Float64
@@ -13,7 +14,7 @@ A KnetArray or Array. Its elements should be Float32 or Float64.
 const FloatArray = Union{KnetArray{F}, Array{F}} where F <: AbstractFloat
 
 
-include("attacks.jl"); export FGSM
+include("attacks.jl"); export FGSM, IterativeFGSM, MomentumIterativeFGSM
 include("lenet.jl"); export Lenet
 
 
